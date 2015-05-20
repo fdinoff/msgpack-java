@@ -36,6 +36,7 @@ public class MessagePackParser extends ParserMinimalBase {
     private long tokenPosition;
     private long currentPosition;
     private final IOContext ioContext;
+    private BinaryFieldType binaryFieldType = BinaryFieldType.EMBEDDED_OBJECT;
 
     private static abstract class StackItem {
         private long numOfElements;
@@ -97,6 +98,10 @@ public class MessagePackParser extends ParserMinimalBase {
             messageUnpacker = messageUnpackerTuple.second();
         }
         messageUnpackerHolder.set(new Tuple<Object, MessageUnpacker>(src, messageUnpacker));
+    }
+
+    public void setBinaryFieldType(BinaryFieldType type) {
+        this.binaryFieldType = type;
     }
 
     @Override
@@ -169,7 +174,19 @@ public class MessagePackParser extends ParserMinimalBase {
                 break;
             case BINARY:
                 messageUnpacker.unpackValue(valueHolder);
-                nextToken = JsonToken.VALUE_EMBEDDED_OBJECT;
+                switch (binaryFieldType) {
+                    case FIELD_NAMES:
+                        if (parsingContext.inObject() && _currToken != JsonToken.FIELD_NAME) {
+                            parsingContext.setCurrentName(new String(valueHolder.getRef().asBinary().toByteArray()));
+                            nextToken = JsonToken.FIELD_NAME;
+                            break;
+                        }
+                        // fall through
+                    case EMBEDDED_OBJECT:
+                    default:
+                        nextToken = JsonToken.VALUE_EMBEDDED_OBJECT;
+                        break;
+                }
                 break;
             case ARRAY:
                 newStack = new StackItemForArray(messageUnpacker.unpackArrayHeader());
@@ -396,5 +413,10 @@ public class MessagePackParser extends ParserMinimalBase {
             throw new IllegalStateException("messageUnpacker is null");
         }
         return messageUnpackerTuple.second();
+    }
+
+    public enum BinaryFieldType {
+        EMBEDDED_OBJECT,
+        FIELD_NAMES,
     }
 }

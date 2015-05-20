@@ -24,6 +24,16 @@ import java.util.Arrays;
 public class MessagePackFactory extends JsonFactory {
     private static final long serialVersionUID = 2578263992015504347L;
 
+    private final MessagePackParser.BinaryFieldType binaryFieldType;
+
+    public MessagePackFactory() {
+        this(MessagePackParser.BinaryFieldType.EMBEDDED_OBJECT);
+    }
+
+    public MessagePackFactory(MessagePackParser.BinaryFieldType binaryFieldType) {
+        this.binaryFieldType = binaryFieldType;
+    }
+
     @Override
     public JsonGenerator createGenerator(OutputStream out, JsonEncoding enc) throws IOException {
         return new MessagePackGenerator(_generatorFeatures, _objectCodec, out);
@@ -54,6 +64,7 @@ public class MessagePackFactory extends JsonFactory {
     @Override
     protected MessagePackParser _createParser(InputStream in, IOContext ctxt) throws IOException {
         MessagePackParser parser = new MessagePackParser(ctxt, _parserFeatures, in);
+        parser.setBinaryFieldType(binaryFieldType);
         return parser;
     }
 
@@ -63,6 +74,7 @@ public class MessagePackFactory extends JsonFactory {
             data = Arrays.copyOfRange(data, offset, offset + len);
         }
         MessagePackParser parser = new MessagePackParser(ctxt, _parserFeatures, data);
+        parser.setBinaryFieldType(binaryFieldType);
         return parser;
     }
 }
