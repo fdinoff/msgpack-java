@@ -26,6 +26,16 @@ public class MessagePackFactory extends JsonFactory {
     protected int messagePackGeneratorFeature = 0;
     protected int messagePackParserFeature = 0;
 
+    private final MessagePackParser.BinaryFieldType binaryFieldType;
+
+    public MessagePackFactory() {
+        this(MessagePackParser.BinaryFieldType.EMBEDDED_OBJECT);
+    }
+
+    public MessagePackFactory(MessagePackParser.BinaryFieldType binaryFieldType) {
+        this.binaryFieldType = binaryFieldType;
+    }
+
     @Override
     public JsonGenerator createGenerator(OutputStream out, JsonEncoding enc) throws IOException {
         return new MessagePackGenerator(messagePackGeneratorFeature, _objectCodec, out);
@@ -56,6 +66,7 @@ public class MessagePackFactory extends JsonFactory {
     @Override
     protected MessagePackParser _createParser(InputStream in, IOContext ctxt) throws IOException {
         MessagePackParser parser = new MessagePackParser(ctxt, messagePackParserFeature, in);
+        parser.setBinaryFieldType(binaryFieldType);
         return parser;
     }
 
@@ -65,6 +76,7 @@ public class MessagePackFactory extends JsonFactory {
             data = Arrays.copyOfRange(data, offset, offset + len);
         }
         MessagePackParser parser = new MessagePackParser(ctxt, messagePackParserFeature, data);
+        parser.setBinaryFieldType(binaryFieldType);
         return parser;
     }
 }
