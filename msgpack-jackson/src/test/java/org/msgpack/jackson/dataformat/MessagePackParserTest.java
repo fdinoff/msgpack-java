@@ -14,6 +14,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -340,5 +341,18 @@ public class MessagePackParserTest extends MessagePackDataformatTestBase {
         assertEquals(BigDecimal.valueOf(Double.MIN_VALUE), objects.get(idx++));
         assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), objects.get(idx++));
         assertEquals(BigDecimal.valueOf(Double.MIN_NORMAL), objects.get(idx++));
+    }
+
+    @Test
+    public void testBigDecimal_maxLongValue() throws IOException {
+        ArrayList<BigDecimal> list = new ArrayList<BigDecimal>();
+        list.add(new BigDecimal(Long.MAX_VALUE));
+        ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
+        byte[] bytes = objectMapper.writeValueAsBytes(list);
+
+        // This shouldn't throw an overflow exception
+        ArrayList<BigDecimal> result = objectMapper.readValue(
+                bytes, new TypeReference<ArrayList<BigDecimal>>() {});
+        assertEquals(result, list);
     }
 }
